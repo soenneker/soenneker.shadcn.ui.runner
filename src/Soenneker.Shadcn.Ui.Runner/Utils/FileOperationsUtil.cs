@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,12 +15,10 @@ using Soenneker.Playwrights.Crawler.Abstract;
 using Soenneker.Playwrights.Crawler.Dtos;
 using Soenneker.Playwrights.Crawler.Enums;
 using Soenneker.Shadcn.Ui.Runner.Utils.Abstract;
-using Soenneker.Utils.Delay;
 using Soenneker.Utils.Directory.Abstract;
 using Soenneker.Utils.File.Abstract;
 using Soenneker.Utils.Path.Abstract;
 using Soenneker.Utils.Process.Abstract;
-using Soenneker.Utils.Process.Dtos;
 
 namespace Soenneker.Shadcn.Ui.Runner.Utils;
 
@@ -57,11 +52,13 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
         string tempRoot = await _pathUtil.GetUniqueTempDirectory("soenneker-shadcn-ui-runner", true, cancellationToken);
         string shadcnUiDirectory = Path.Combine(tempRoot, "shadcn-ui");
         //string shadcnDocsDirectory = Path.Combine(shadcnUiDirectory, "apps", "v4");
+        string crawledRepositoryDirectory = Path.Combine(tempRoot, "soenneker-shadcn-ui-crawled");
         string componentsRepositoryDirectory = Path.Combine(tempRoot, "soenneker-shadcn-ui-components");
         string crawlDirectory = Path.Combine(tempRoot, "crawl");
         string extractedDirectory = Path.Combine(tempRoot, "extracted");
 
         await CloneRepository(Constants.ShadcnUiRepository, shadcnUiDirectory, cancellationToken);
+        await CloneRepository(Constants.CrawledRepository, crawledRepositoryDirectory, cancellationToken);
         await CloneRepository(Constants.ComponentsRepository, componentsRepositoryDirectory, cancellationToken);
 
         // Will wait on local crawling until they fix it.
@@ -84,6 +81,8 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
            // await WaitForSite(Constants.ComponentsUrl, cancellationToken);
 
             await Crawl(crawlDirectory, cancellationToken);
+            await ReplaceRepositoryContents(crawledRepositoryDirectory, crawlDirectory, cancellationToken);
+            await CommitAndPush(crawledRepositoryDirectory, cancellationToken);
             await ExtractPreviewFamilies(crawlDirectory, extractedDirectory, cancellationToken);
             await ReplaceRepositoryContents(componentsRepositoryDirectory, extractedDirectory, cancellationToken);
             await CommitAndPush(componentsRepositoryDirectory, cancellationToken);
@@ -183,8 +182,8 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
         {
             Url = Constants.ComponentsUrl,
             SaveDirectory = crawlDirectory,
-            Mode = PlaywrightCrawlMode.HtmlOnly,
-            MaxDepth = 1,
+            Mode = PlaywrightCrawlMode.Full,
+            MaxDepth = 10,
             MaxPages = 500,
             SameHostOnly = true,
             PrettyPrintHtml = true,
@@ -251,9 +250,9 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
         }
     }
 
-    private async ValueTask ReplaceRepositoryContents(string componentsRepositoryDirectory, string extractedDirectory, CancellationToken cancellationToken)
+    private async ValueTask ReplaceRepositoryContents(string repositoryDirectory, string sourceDirectory, CancellationToken cancellationToken)
     {
-        List<string> directories = await _directoryUtil.GetAllDirectories(componentsRepositoryDirectory, cancellationToken);
+        List<string> directories = await _directoryUtil.GetAllDirectories(repositoryDirectory, cancellationToken);
 
         foreach (string directory in directories)
         {
@@ -263,21 +262,26 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
             await _directoryUtil.Delete(directory, cancellationToken);
         }
 
-        List<string> files = await _directoryUtil.GetFilesByExtension(componentsRepositoryDirectory, "", false, cancellationToken);
+        List<string> files = await _directoryUtil.GetFilesByExtension(repositoryDirectory, "", false, cancellationToken);
 
         foreach (string file in files)
         {
             await _fileUtil.Delete(file, cancellationToken: cancellationToken);
         }
 
-        List<string> sourceFiles = await _directoryUtil.GetFilesByExtension(extractedDirectory, ".html", false, cancellationToken);
+        List<string> sourcePaths = await _directoryUtil.GetFilesByExtension(sourceDirectory, "", true, cancellationToken);
 
-        foreach (string sourceFile in sourceFiles)
+        foreach (string sourcePath in sourcePaths)
         {
-            string destination = Path.Combine(componentsRepositoryDirectory, Path.GetFileName(sourceFile));
+            string relativePath = Path.GetRelativePath(sourceDirectory, sourcePath);
+            string destination = Path.Combine(repositoryDirectory, relativePath);
+            string? destinationDirectory = Path.GetDirectoryName(destination);
+
+            if (!string.IsNullOrWhiteSpace(destinationDirectory))
+                await _directoryUtil.Create(destinationDirectory, cancellationToken: cancellationToken);
 
             await _fileUtil.DeleteIfExists(destination, cancellationToken: cancellationToken);
-            await _fileUtil.Copy(sourceFile, destination, cancellationToken: cancellationToken);
+            await _fileUtil.Copy(sourcePath, destination, cancellationToken: cancellationToken);
         }
     }
 
