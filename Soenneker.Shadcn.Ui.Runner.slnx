@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/.github/">
+    <File Path=".github/renovate.json" />
+  </Folder>
+  <Folder Name="/.github/workflows/">
+    <File Path=".github/workflows/build-and-test.yml" />
+    <File Path=".github/workflows/codeql.yml" />
+    <File Path=".github/workflows/daily-automatic-update.yml" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Soenneker.Shadcn.Ui.Runner/Soenneker.Shadcn.Ui.Runner.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/Soenneker.Shadcn.Ui.Runner.Tests/Soenneker.Shadcn.Ui.Runner.Tests.csproj" />
+  </Folder>
+</Solution>
