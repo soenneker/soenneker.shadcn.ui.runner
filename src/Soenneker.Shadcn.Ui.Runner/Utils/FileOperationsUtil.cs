@@ -16,6 +16,7 @@ using Soenneker.Playwrights.Crawler.Dtos;
 using Soenneker.Playwrights.Crawler.Enums;
 using Soenneker.Shadcn.Ui.Runner.Utils.Abstract;
 using Soenneker.Utils.Directory.Abstract;
+using Soenneker.Utils.Environment;
 using Soenneker.Utils.File.Abstract;
 using Soenneker.Utils.Path.Abstract;
 using Soenneker.Utils.Process.Abstract;
@@ -57,11 +58,12 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
         string crawlDirectory = Path.Combine(tempRoot, "crawl");
         string extractedDirectory = Path.Combine(tempRoot, "extracted");
 
-        await CloneRepository(Constants.ShadcnUiRepository, shadcnUiDirectory, cancellationToken);
         await CloneRepository(Constants.CrawledRepository, crawledRepositoryDirectory, cancellationToken);
         await CloneRepository(Constants.ComponentsRepository, componentsRepositoryDirectory, cancellationToken);
 
-        // Will wait on local crawling until they fix it.
+
+        // Will wait on local crawling until they fix the ability to actually build it consistently...
+        //await CloneRepository(Constants.ShadcnUiRepository, shadcnUiDirectory, cancellationToken);
 
         //await _nodeUtil.EnsureInstalled(cancellationToken: cancellationToken);
 
@@ -287,15 +289,9 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
 
     private async ValueTask CommitAndPush(string componentsRepositoryDirectory, CancellationToken cancellationToken)
     {
-        if (!await _gitUtil.IsRepositoryDirty(componentsRepositoryDirectory, cancellationToken))
-        {
-            _logger.LogInformation("No repository changes detected after extraction.");
-            return;
-        }
-
-        string token = Environment.GetEnvironmentVariable("GH__TOKEN") ?? throw new InvalidOperationException("GH__TOKEN is required for git push.");
-        string? name = Environment.GetEnvironmentVariable("GIT__NAME");
-        string? email = Environment.GetEnvironmentVariable("GIT__EMAIL");
+        string token = EnvironmentUtil.GetVariableStrict("GH__TOKEN");
+        string? name = EnvironmentUtil.GetVariableStrict("GIT__NAME");
+        string? email = EnvironmentUtil.GetVariableStrict("GIT__EMAIL");
 
         await _gitUtil.CommitAndPush(componentsRepositoryDirectory, Constants.CommitMessage, token, name, email, cancellationToken);
     }
