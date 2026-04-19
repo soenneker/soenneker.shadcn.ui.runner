@@ -287,13 +287,13 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
         }
     }
 
-    private async ValueTask CommitAndPush(string componentsRepositoryDirectory, CancellationToken cancellationToken)
+    private async ValueTask CommitAndPush(string repositoryDir, CancellationToken cancellationToken)
     {
         string token = EnvironmentUtil.GetVariableStrict("GH__TOKEN");
         string? name = EnvironmentUtil.GetVariableStrict("GIT__NAME");
         string? email = EnvironmentUtil.GetVariableStrict("GIT__EMAIL");
 
-        await _gitUtil.CommitAndPush(componentsRepositoryDirectory, Constants.CommitMessage, token, name, email, cancellationToken);
+        await _gitUtil.CommitAndPush(repositoryDir, Constants.CommitMessage, token, name, email, cancellationToken);
     }
 
     private async ValueTask<string> RunProcess(string fileName, string arguments, string workingDirectory, CancellationToken cancellationToken, TimeSpan timeout,
