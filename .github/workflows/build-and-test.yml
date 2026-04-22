@@ -38,7 +38,7 @@ jobs:
         run: dotnet build test/Soenneker.Shadcn.Ui.Runner.Tests/Soenneker.Shadcn.Ui.Runner.Tests.csproj --configuration Release --no-restore --verbosity minimal
 
       - name: Test
-        run: dotnet test test/Soenneker.Shadcn.Ui.Runner.Tests/Soenneker.Shadcn.Ui.Runner.Tests.csproj --configuration Release --no-build --no-restore --verbosity minimal
+        run: dotnet test --project test/Soenneker.Shadcn.Ui.Runner.Tests/Soenneker.Shadcn.Ui.Runner.Tests.csproj --configuration Release --no-build --no-restore --verbosity minimal
 
       - name: Pack
         run: dotnet pack src/Soenneker.Shadcn.Ui.Runner/Soenneker.Shadcn.Ui.Runner.csproj --configuration Release --no-build --no-restore --output . --verbosity minimal
