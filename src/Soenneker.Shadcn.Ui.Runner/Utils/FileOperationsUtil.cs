@@ -23,7 +23,7 @@ using Soenneker.Utils.Process.Abstract;
 
 namespace Soenneker.Shadcn.Ui.Runner.Utils;
 
-///<inheritdoc cref="IFileOperationsUtil"/>
+/// <inheritdoc cref="IFileOperationsUtil"/>
 public sealed class FileOperationsUtil : IFileOperationsUtil
 {
     private readonly ILogger<FileOperationsUtil> _logger;
