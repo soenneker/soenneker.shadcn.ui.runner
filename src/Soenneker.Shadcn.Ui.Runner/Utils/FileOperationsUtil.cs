@@ -58,29 +58,27 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
         string crawlDirectory = Path.Combine(tempRoot, "crawl");
         string extractedDirectory = Path.Combine(tempRoot, "extracted");
 
-        await CloneRepository(Constants.CrawledRepository, crawledRepositoryDirectory, cancellationToken);
-        await CloneRepository(Constants.ComponentsRepository, componentsRepositoryDirectory, cancellationToken);
-
-
-        // Will wait on local crawling until they fix the ability to actually build it consistently...
-        //await CloneRepository(Constants.ShadcnUiRepository, shadcnUiDirectory, cancellationToken);
-
-        //await _nodeUtil.EnsureInstalled(cancellationToken: cancellationToken);
-
-        //await _nodeUtil.InstallPnpm(false, cancellationToken);
-        //await _nodeUtil.RunNpmCommand("install -g bun", cancellationToken);
-
-        //string pnpmPath = await _nodeUtil.GetPnpmPath(cancellationToken);
-
-        //await RenameEnvExample(shadcnDocsDirectory, cancellationToken);
-
-        //await RunProcess(pnpmPath, "install", shadcnUiDirectory, cancellationToken, TimeSpan.FromMinutes(10));
-        //await RunProcess(pnpmPath, "build", shadcnUiDirectory, cancellationToken, TimeSpan.FromMinutes(10));
-
-
         try
         {
-           // await WaitForSite(Constants.ComponentsUrl, cancellationToken);
+            await CloneRepository(Constants.CrawledRepository, crawledRepositoryDirectory, cancellationToken);
+            await CloneRepository(Constants.ComponentsRepository, componentsRepositoryDirectory, cancellationToken);
+
+            // Will wait on local crawling until they fix the ability to actually build it consistently...
+            //await CloneRepository(Constants.ShadcnUiRepository, shadcnUiDirectory, cancellationToken);
+
+            //await _nodeUtil.EnsureInstalled(cancellationToken: cancellationToken);
+
+            //await _nodeUtil.InstallPnpm(false, cancellationToken);
+            //await _nodeUtil.RunNpmCommand("install -g bun", cancellationToken);
+
+            //string pnpmPath = await _nodeUtil.GetPnpmPath(cancellationToken);
+
+            //await RenameEnvExample(shadcnDocsDirectory, cancellationToken);
+
+            //await RunProcess(pnpmPath, "install", shadcnUiDirectory, cancellationToken, TimeSpan.FromMinutes(10));
+            //await RunProcess(pnpmPath, "build", shadcnUiDirectory, cancellationToken, TimeSpan.FromMinutes(10));
+
+            // await WaitForSite(Constants.ComponentsUrl, cancellationToken);
 
             await Crawl(crawlDirectory, cancellationToken);
             await ReplaceRepositoryContents(crawledRepositoryDirectory, crawlDirectory, cancellationToken);
@@ -93,12 +91,14 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
         {
             try
             {
-             //   if (!devServer.HasExited)
-             //       await _processUtil.Kill(devServer, true, cancellationToken);
+                // if (!devServer.HasExited)
+                //     await _processUtil.Kill(devServer, true, cancellationToken);
+
+                await _directoryUtil.DeleteIfExists(tempRoot, CancellationToken.None);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Could not stop pnpm dev cleanly.");
+                _logger.LogWarning(ex, "Could not remove temporary runner directory {Directory}", tempRoot);
             }
         }
     }
@@ -268,6 +268,9 @@ public sealed class FileOperationsUtil : IFileOperationsUtil
 
         foreach (string file in files)
         {
+            if (Path.GetFileName(file).Equals("README.md", StringComparison.OrdinalIgnoreCase))
+                continue;
+
             await _fileUtil.Delete(file, cancellationToken: cancellationToken);
         }
 
