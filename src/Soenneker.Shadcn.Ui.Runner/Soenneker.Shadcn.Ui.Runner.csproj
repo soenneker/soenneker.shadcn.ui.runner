@@ -27,6 +27,6 @@
         <PackageReference Include="Soenneker.Node.Util" Version="4.0.290" />
         <PackageReference Include="Soenneker.Playwrights.Crawler" Version="4.0.225" />
         <PackageReference Include="Soenneker.Utils.Delay" Version="4.0.84" />
-        <PackageReference Include="Soenneker.Utils.File.Download" Version="4.0.1724" />
+        <PackageReference Include="Soenneker.Utils.File.Download" Version="4.0.1725" />
     </ItemGroup>
 </Project>
